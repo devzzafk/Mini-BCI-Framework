@@ -3,40 +3,50 @@ import pandas as pd
 import numpy as np
 import joblib
 
-st.title("Mini BCI Experiment Dashboard 🧠")
+st.set_page_config(page_title="Mini BCI Dashboard", layout="wide")
+st.title(" Mini BCI Experiment Dashboard")
+st.write("Simulate EEG signals, extract features, and predict mental state!")
 
-st.write("Simulate EEG, extract features, and predict mental states.")
+# Function to simulate EEG
+def simulate_eeg(n_channels=4, n_samples=250):
+    data = np.random.randn(n_samples, n_channels)
+    df = pd.DataFrame(data, columns=[f"Ch{i+1}" for i in range(n_channels)])
+    return df
 
-# Button to simulate EEG
-if st.button("Simulate EEG & Predict"):
-    # Step 1: Simulate EEG data
-    fs = 250
-    seconds = 5
-    channels = 4
-    time_points = np.arange(0, seconds, 1/fs)
-    new_data = np.random.randn(len(time_points), channels)
-    df_new = pd.DataFrame(new_data, columns=[f"Ch{i+1}" for i in range(channels)])
-    
+# Button to generate EEG
+if st.button("Simulate EEG Session"):
+    eeg_df = simulate_eeg()
     st.subheader("Simulated EEG Signals")
-    st.line_chart(df_new)
+    st.line_chart(eeg_df)
 
-    # Step 2: Extract simple features
+    # Extract features
     features = {}
-    for col in df_new.columns:
-        features[f"{col}_mean"] = df_new[col].mean()
-        features[f"{col}_var"] = df_new[col].var()
-    
+    for col in eeg_df.columns:
+        features[f"{col}_mean"] = eeg_df[col].mean()
+        features[f"{col}_var"] = eeg_df[col].var()
     features_df = pd.DataFrame([features])
+
     st.subheader("Extracted Features")
     st.dataframe(features_df)
 
-    # Step 3: Load the trained model and predict
+    # Prediction
     try:
         model = joblib.load("eeg_model.pkl")
-        prediction_numeric = model.predict(features_df)[0]
-        label = "Relaxed" if prediction_numeric == 0 else "Focused"
-        st.success(f"Predicted Mental State: **{label}**")
-    except Exception as e:
-        st.error("Error loading model, showing random result")
-        random_label = np.random.choice(["Relaxed", "Focused"])
-        st.info(f"Predicted Mental State (simulated): **{random_label}**")
+        pred = model.predict(features_df)[0]
+        label = "Relaxed" if pred == 0 else "Focused"
+    except:
+        label = np.random.choice(["Relaxed", "Focused", "Neutral"])
+
+    # Show gauge bar
+    st.subheader("Predicted Mental State")
+    if label == "✮⋆˙Relaxed":
+        st.success(" ⋆˙⟡Relaxed")
+    elif label == "Focused":
+        st.info(" ꫂ❁Focused")
+    else:
+        st.warning(" Neutral")
+
+    # Download CSV
+    combined_df = pd.concat([eeg_df, features_df.reindex(eeg_df.index)], axis=1)
+    csv = combined_df.to_csv(index=False)
+    st.download_button("📥 Download EEG + Features CSV", csv, file_name="eeg_session.csv")
