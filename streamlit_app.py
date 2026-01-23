@@ -3,53 +3,40 @@ import pandas as pd
 import numpy as np
 import joblib
 
-# Import your modules if you have them, else we simulate inline
-# from preprocessing import filter_data
-# from experiments import predict_state
+st.title("Mini BCI Experiment Dashboard 🧠")
 
-st.title("Mini BCI Experiment Framework 🧠")
+st.write("Simulate EEG, extract features, and predict mental states.")
 
-st.write("Simulate EEG signals, extract features, and predict mental state.")
+# Button to simulate EEG
+if st.button("Simulate EEG & Predict"):
+    # Step 1: Simulate EEG data
+    fs = 250
+    seconds = 5
+    channels = 4
+    time_points = np.arange(0, seconds, 1/fs)
+    new_data = np.random.randn(len(time_points), channels)
+    df_new = pd.DataFrame(new_data, columns=[f"Ch{i+1}" for i in range(channels)])
+    
+    st.subheader("Simulated EEG Signals")
+    st.line_chart(df_new)
 
-# -----------------------------
-# Step 1: Simulate EEG signals
-# -----------------------------
-if st.button("Simulate EEG"):
-    # Simulate 4-channel EEG data (10 samples)
-    eeg_data = pd.DataFrame({
-        "Ch1": np.random.randn(10),
-        "Ch2": np.random.randn(10),
-        "Ch3": np.random.randn(10),
-        "Ch4": np.random.randn(10)
-    })
-    st.write("Simulated EEG Data:")
-    st.dataframe(eeg_data)
-
-    # -----------------------------
     # Step 2: Extract simple features
-    # -----------------------------
-    features = pd.DataFrame({
-        "Ch1_mean": [eeg_data["Ch1"].mean()],
-        "Ch1_var": [eeg_data["Ch1"].var()],
-        "Ch2_mean": [eeg_data["Ch2"].mean()],
-        "Ch2_var": [eeg_data["Ch2"].var()],
-        "Ch3_mean": [eeg_data["Ch3"].mean()],
-        "Ch3_var": [eeg_data["Ch3"].var()],
-        "Ch4_mean": [eeg_data["Ch4"].mean()],
-        "Ch4_var": [eeg_data["Ch4"].var()],
-    })
-    st.write("Extracted Features:")
-    st.dataframe(features)
+    features = {}
+    for col in df_new.columns:
+        features[f"{col}_mean"] = df_new[col].mean()
+        features[f"{col}_var"] = df_new[col].var()
+    
+    features_df = pd.DataFrame([features])
+    st.subheader("Extracted Features")
+    st.dataframe(features_df)
 
-    # -----------------------------
-    # Step 3: Predict Mental State
-    # -----------------------------
-    # Try to load your trained model
+    # Step 3: Load the trained model and predict
     try:
-        model = joblib.load("experiments/eeg_model.pkl")
-        prediction = model.predict(features)[0]
-        st.success(f"Predicted Mental State: {prediction}")
-    except:
-        st.warning("No trained model found. Using simulated prediction.")
-        prediction = np.random.choice(["Relaxed", "Focused", "Neutral"])
-        st.info(f"Predicted Mental State: {prediction}")
+        model = joblib.load("eeg_model.pkl")
+        prediction_numeric = model.predict(features_df)[0]
+        label = "Relaxed" if prediction_numeric == 0 else "Focused"
+        st.success(f"Predicted Mental State: **{label}**")
+    except Exception as e:
+        st.error("Error loading model, showing random result")
+        random_label = np.random.choice(["Relaxed", "Focused"])
+        st.info(f"Predicted Mental State (simulated): **{random_label}**")
