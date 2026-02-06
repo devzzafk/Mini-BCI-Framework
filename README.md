@@ -89,7 +89,7 @@ Make complex neurotech concepts simple and visual
 
 I explain this project step-by-step on my channel Juneverse — where I document my coding journey, creative tech experiments, and learning process as a student developer.
 
-🔗 Link coming soon!
+🔗 https://youtu.be/umKl40rpDaY
 
 👩‍💻 Author
 
